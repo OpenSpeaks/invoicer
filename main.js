@@ -9,6 +9,8 @@
 
   const form = document.getElementById('reimbursement-form');
   const statusEl = document.getElementById('status');
+  const dateInput = document.getElementById('date');
+  const phoneInput = document.getElementById('phone');
   const amountInput = document.getElementById('amount');
   const allowanceInput = document.getElementById('allowance');
   const totalInput = document.getElementById('total');
@@ -33,14 +35,48 @@
     }).format(dt);
   }
 
+  function setMaxDateToday() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    dateInput.max = `${yyyy}-${mm}-${dd}`;
+  }
+
+  function sanitizePhoneInput() {
+    phoneInput.value = phoneInput.value.replace(/\D/g, '').slice(0, 10);
+  }
+
   function updateTotal() {
     const amount = Number(amountInput.value || 0);
     const allowance = Number(allowanceInput.value || 0);
     totalInput.value = (amount + allowance).toFixed(2);
   }
 
-  amountInput.addEventListener('input', updateTotal);
-  allowanceInput.addEventListener('input', updateTotal);
+  function getInitials(name) {
+    const words = name.trim().split(/\s+/).filter(Boolean);
+
+    if (words.length === 0) return 'XX';
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+
+    const firstInitial = words[0][0] || '';
+    const lastInitial = words[words.length - 1][0] || '';
+    return `${firstInitial}${lastInitial}`.toUpperCase();
+  }
+
+  function padSequence(sequenceValue) {
+    const num = Number(sequenceValue);
+    if (!Number.isInteger(num) || num < 1 || num > 999) {
+      throw new Error('Sequence number must be between 1 and 999.');
+    }
+    return String(num).padStart(3, '0');
+  }
+
+  function buildFormNumber(name, sequenceValue) {
+    const initials = getInitials(name);
+    const padded = padSequence(sequenceValue);
+    return `${initials}-${padded}`;
+  }
 
   function wrapText(doc, text, x, y, maxWidth, lineHeight) {
     const lines = doc.splitTextToSize(text, maxWidth);
@@ -90,7 +126,7 @@
     );
     y += 2;
 
-    doc.text(`To: ${templateData.billed_name}`, left, y);
+    doc.text('To: Subhashish Panigrahi', left, y);
     y += 8;
 
     doc.setFont('helvetica', 'bold');
@@ -175,43 +211,58 @@
     );
   }
 
+  setMaxDateToday();
+  amountInput.addEventListener('input', updateTotal);
+  allowanceInput.addEventListener('input', updateTotal);
+  phoneInput.addEventListener('input', sanitizePhoneInput);
+
   form.addEventListener('submit', async function (event) {
     event.preventDefault();
     setStatus('Processing...');
 
     updateTotal();
+    sanitizePhoneInput();
 
     const formData = new FormData(form);
 
+    const rawName = (formData.get('name') || '').trim();
     const rawEmail = (formData.get('email') || '').trim();
     const rawPhone = (formData.get('phone') || '').trim();
     const rawDate = formData.get('date') || '';
+    const rawSequence = formData.get('sequence_no');
 
     if (!rawPhone && !rawEmail) {
       setStatus('Please provide at least a phone number or an email address.');
       return;
     }
 
+    if (rawPhone && !/^\d{10}$/.test(rawPhone)) {
+      setStatus('Phone number must be exactly 10 digits.');
+      return;
+    }
+
+    let formNumber = '';
+    try {
+      formNumber = buildFormNumber(rawName, rawSequence);
+    } catch (err) {
+      setStatus(err.message);
+      return;
+    }
+
     const templateData = {
       date: rawDate,
       date_long: formatDateLong(rawDate),
-      name: (formData.get('name') || '').trim(),
+      name: rawName,
       phone: rawPhone || '-',
       email: rawEmail || '-',
       email_or_phone: rawEmail || rawPhone || '-',
-      billed_name: (formData.get('billed_name') || '').trim(),
-      form_no: (formData.get('form_no') || '').trim(),
+      form_no: formNumber,
       amount: toMoney(formData.get('amount')),
       allowance: toMoney(formData.get('allowance')),
       total: toMoney(formData.get('total'))
     };
 
-    if (
-      !templateData.date ||
-      !templateData.name ||
-      !templateData.billed_name ||
-      !templateData.form_no
-    ) {
+    if (!templateData.date || !templateData.name || !rawSequence) {
       setStatus('Please fill all required fields.');
       return;
     }
@@ -230,9 +281,10 @@
       const response = await sendEmail(emailParams);
       console.log('EmailJS success:', response);
 
-      setStatus('Done. PDF downloaded and email sent.');
+      setStatus(`Done. PDF downloaded and email sent. Reimbursement number: ${templateData.form_no}`);
       form.reset();
       totalInput.value = '';
+      setMaxDateToday();
     } catch (error) {
       console.error('EmailJS / form error:', error);
       setStatus('Something went wrong while generating or sending the form.');
