@@ -2,7 +2,12 @@
   const EMAILJS_PUBLIC_KEY = 'tGxnWGzlBZ_6C7Dio';
   const EMAILJS_SERVICE_ID = 'service_8pfqso6';
   const EMAILJS_TEMPLATE_ID = 'template_8q2j6ss';
-  
+
+  const MIN_FILL_SECONDS = 6;
+  const BLOCK_HOURS = 24;
+  const STORAGE_KEY_LAST_SUBMISSION = 'openspeaks_reimbursement_last_submission';
+  const STORAGE_KEY_USED_TOKENS = 'openspeaks_reimbursement_used_tokens';
+
   emailjs.init({
     publicKey: EMAILJS_PUBLIC_KEY
   });
@@ -14,9 +19,91 @@
   const amountInput = document.getElementById('amount');
   const allowanceInput = document.getElementById('allowance');
   const totalInput = document.getElementById('total');
+  const nameInput = document.getElementById('name');
 
   function setStatus(message) {
     statusEl.textContent = message;
+  }
+
+  function getNow() {
+    return Date.now();
+  }
+
+  function setPageLoadTime() {
+    window.__pageLoadTime = getNow();
+  }
+
+  function getPageLoadTime() {
+    return window.__pageLoadTime || getNow();
+  }
+
+  function wasSubmittedTooFast() {
+    const elapsedMs = getNow() - getPageLoadTime();
+    return elapsedMs < MIN_FILL_SECONDS * 1000;
+  }
+
+  function getLastSubmissionTime() {
+    const raw = localStorage.getItem(STORAGE_KEY_LAST_SUBMISSION);
+    return raw ? Number(raw) : 0;
+  }
+
+  function setLastSubmissionTime() {
+    localStorage.setItem(STORAGE_KEY_LAST_SUBMISSION, String(getNow()));
+  }
+
+  function isBlockedFor24Hours() {
+    const last = getLastSubmissionTime();
+    if (!last) return false;
+    const diff = getNow() - last;
+    return diff < BLOCK_HOURS * 60 * 60 * 1000;
+  }
+
+  function getHoursRemaining() {
+    const last = getLastSubmissionTime();
+    if (!last) return 0;
+    const diff = getNow() - last;
+    const remaining = BLOCK_HOURS * 60 * 60 * 1000 - diff;
+    return remaining > 0 ? Math.ceil(remaining / (60 * 60 * 1000)) : 0;
+  }
+
+  function getUsedTokens() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY_USED_TOKENS) || '[]');
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function setUsedTokens(tokens) {
+    localStorage.setItem(STORAGE_KEY_USED_TOKENS, JSON.stringify(tokens));
+  }
+
+  function markTokenUsed(token) {
+    if (!token) return;
+    const tokens = getUsedTokens();
+    if (!tokens.includes(token)) {
+      tokens.push(token);
+      setUsedTokens(tokens);
+    }
+  }
+
+  function isTokenAlreadyUsed(token) {
+    if (!token) return false;
+    return getUsedTokens().includes(token);
+  }
+
+  function getUrlToken() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('token') || '';
+  }
+
+  function prefillFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const name = params.get('name');
+
+    if (name && nameInput && !nameInput.value) {
+      nameInput.value = name;
+    }
   }
 
   function toMoney(value) {
@@ -44,6 +131,7 @@
   }
 
   function sanitizePhoneInput() {
+    if (!phoneInput) return;
     phoneInput.value = phoneInput.value.replace(/\D/g, '').slice(0, 10);
   }
 
@@ -211,7 +299,10 @@
     );
   }
 
+  setPageLoadTime();
   setMaxDateToday();
+  prefillFromUrl();
+
   amountInput.addEventListener('input', updateTotal);
   allowanceInput.addEventListener('input', updateTotal);
   phoneInput.addEventListener('input', sanitizePhoneInput);
@@ -222,6 +313,29 @@
 
     updateTotal();
     sanitizePhoneInput();
+
+    const honeypotValue = (form.querySelector('[name="website"]')?.value || '').trim();
+    if (honeypotValue) {
+      setStatus('Submission blocked.');
+      return;
+    }
+
+    if (wasSubmittedTooFast()) {
+      setStatus(`Please wait at least ${MIN_FILL_SECONDS} seconds before submitting.`);
+      return;
+    }
+
+    if (isBlockedFor24Hours()) {
+      const hours = getHoursRemaining();
+      setStatus(`This browser has already submitted a reimbursement recently. Please try again in about ${hours} hour(s).`);
+      return;
+    }
+
+    const urlToken = getUrlToken();
+    if (urlToken && isTokenAlreadyUsed(urlToken)) {
+      setStatus('This link has already been used in this browser.');
+      return;
+    }
 
     const formData = new FormData(form);
 
@@ -281,10 +395,16 @@
       const response = await sendEmail(emailParams);
       console.log('EmailJS success:', response);
 
+      setLastSubmissionTime();
+      if (urlToken) {
+        markTokenUsed(urlToken);
+      }
+
       setStatus(`Done. PDF downloaded and email sent. Reimbursement number: ${templateData.form_no}`);
       form.reset();
       totalInput.value = '';
       setMaxDateToday();
+      setPageLoadTime();
     } catch (error) {
       console.error('EmailJS / form error:', error);
       setStatus('Something went wrong while generating or sending the form.');
