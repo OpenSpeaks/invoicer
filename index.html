@@ -1,75 +1,240 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Reimbursement Form</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenSpeaks Reimbursement Form</title>
 
-  <!-- jsPDF via CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
-  <!-- EmailJS SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <style>
+    :root {
+      --bg: #f5f5f5;
+      --card: #ffffff;
+      --text: #222;
+      --muted: #666;
+      --line: #d9d9d9;
+      --accent: #458500;
+      --accent-dark: #2f5f00;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif, Arial;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px 16px;
+    }
+
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    .header {
+      border-top: 6px solid var(--accent);
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .header img {
+      width: 76px;
+      height: 24px;
+      object-fit: contain;
+    }
+
+    .header-title {
+      font-size: 18px;
+      border-left: 1px solid #333;
+      padding-left: 12px;
+      font-weight: 700;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 0 0 16px 0;
+      font-size: 24px;
+    }
+
+    p.note {
+      margin-top: 0;
+      color: var(--muted);
+    }
+
+    form {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font: inherit;
+      background: #fff;
+      color: var(--text);
+    }
+
+    input:focus {
+      outline: 2px solid #b7d58f;
+      border-color: var(--accent);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font: inherit;
+      font-weight: 700;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--accent-dark);
+    }
+
+    .status {
+      color: var(--muted);
+      min-height: 1.5em;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Reimbursement Form</h1>
+  <div class="wrap">
+    <div class="card">
+      <div class="header">
+        <a href="[Website Link]" target="_blank" rel="noopener noreferrer">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/OpenSpeaks_logo.svg/1280px-OpenSpeaks_logo.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail"
+            alt="OpenSpeaks logo"
+          />
+        </a>
+        <div class="header-title">Reimbursement Form</div>
+      </div>
 
-  <form id="reimbursement-form">
-    <label>
-      Date
-      <!-- Clickable date picker; normalized to yyyy-mm-dd -->
-      <input type="date" name="date" required />
-    </label>
-    <br/>
+      <div class="content">
+        <h1>Reimbursement Form</h1>
+        <p class="note">Fill the form, download the PDF copy, and send the details by email.</p>
 
-    <label>
-      Your name
-      <input name="name" required />
-    </label>
-    <br/>
+        <form id="reimbursement-form">
+          <div class="grid">
+            <div>
+              <label for="date">Date</label>
+              <input type="date" id="date" name="date" required />
+            </div>
 
-    <label>
-      Phone (required if no email)
-      <input name="phone" />
-    </label>
-    <br/>
+            <div>
+              <label for="form_no">Reimbursement number</label>
+              <input type="text" id="form_no" name="form_no" required />
+            </div>
+          </div>
 
-    <label>
-      Email (optional)
-      <input type="email" name="email" />
-    </label>
-    <br/>
+          <div class="grid">
+            <div>
+              <label for="name">Your name</label>
+              <input type="text" id="name" name="name" required />
+            </div>
 
-    <label>
-      Reimbursement form no.
-      <input name="form_no" required />
-    </label>
-    <br/>
+            <div>
+              <label for="billed_name">Billed to</label>
+              <input type="text" id="billed_name" name="billed_name" required />
+            </div>
+          </div>
 
-    <label>
-      Amount (INR) – OpenSpeaks language documentation
-      <input type="number" name="amount" min="0" step="0.01" required />
-    </label>
-    <br/>
+          <div class="grid">
+            <div>
+              <label for="phone">Phone</label>
+              <input type="tel" id="phone" name="phone" />
+            </div>
 
-    <label>
-      Travel/accommodation allowance (INR)
-      <input type="number" name="allowance" min="0" step="0.01" required />
-    </label>
-    <br/>
+            <div>
+              <label for="email">Email (optional)</label>
+              <input type="email" id="email" name="email" />
+            </div>
+          </div>
 
-    <!-- total can be auto-calculated in JS; keep it read-only in UI -->
-    <label>
-      Total (INR)
-      <input type="number" name="total" min="0" step="0.01" readonly />
-    </label>
-    <br/>
+          <div class="grid">
+            <div>
+              <label for="amount">OpenSpeaks language documentation (INR)</label>
+              <input type="number" id="amount" name="amount" min="0" step="0.01" required />
+            </div>
 
-    <button type="submit">Submit</button>
-  </form>
+            <div>
+              <label for="allowance">Travel/accommodation allowance (INR)</label>
+              <input type="number" id="allowance" name="allowance" min="0" step="0.01" required />
+            </div>
+          </div>
 
-  <p id="status"></p>
+          <div>
+            <label for="total">Total (INR)</label>
+            <input type="number" id="total" name="total" min="0" step="0.01" readonly />
+          </div>
 
-  <!-- Your custom JS -->
+          <div class="actions">
+            <button type="submit">Generate PDF and Send</button>
+            <span id="status" class="status"></span>
+          </div>
+
+          <div class="small">
+            Provide at least a phone number or an email address. If an email is entered, a copy can also be sent there.
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script src="main.js"></script>
 </body>
 </html>
