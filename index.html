@@ -36,6 +36,14 @@
       margin: 0 auto;
     }
 
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+    
     .card {
       background: var(--card);
       border-radius: var(--radius);
@@ -152,7 +160,10 @@
       font-weight: 600;
       margin-bottom: 6px;
     }
-
+<div class="hp-field" aria-hidden="true">
+  <label for="website">Leave this field empty</label>
+  <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+</div>
     input {
       width: 100%;
       padding: 12px 14px;
