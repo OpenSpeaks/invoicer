@@ -90,6 +90,27 @@
       gap: 16px;
     }
 
+    .amount-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.amount-grid label {
+  min-height: 3.6em;
+}
+
+@media (max-width: 800px) {
+  .amount-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .amount-grid label {
+    min-height: auto;
+  }
+}
+
     @media (max-width: 640px) {
       .grid {
         grid-template-columns: 1fr;
@@ -216,22 +237,22 @@
             </div>
           </div>
 
-          <div class="grid">
-            <div>
-              <label for="amount">OpenSpeaks language documentation (INR)</label>
-              <input type="number" id="amount" name="amount" min="0" step="0.01" required />
-            </div>
+           <div class="amount-grid">
+  <div>
+    <label for="amount">OpenSpeaks language documentation (INR)</label>
+    <input type="number" id="amount" name="amount" min="0" step="0.01" required />
+  </div>
 
-            <div>
-              <label for="allowance">Travel/accommodation allowance (INR)</label>
-              <input type="number" id="allowance" name="allowance" min="0" step="0.01" required />
-            </div>
-          </div>
+  <div>
+    <label for="allowance">Travel/accommodation allowance (INR)</label>
+    <input type="number" id="allowance" name="allowance" min="0" step="0.01" required />
+  </div>
 
-          <div>
-            <label for="total">Total (INR)</label>
-            <input type="number" id="total" name="total" min="0" step="0.01" readonly />
-          </div>
+  <div>
+    <label for="total">Total (INR)</label>
+    <input type="number" id="total" name="total" min="0" step="0.01" readonly />
+  </div>
+</div>
 
           <div class="actions">
             <button type="submit">Generate PDF and Send</button>
