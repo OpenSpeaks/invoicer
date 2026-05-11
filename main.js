@@ -1,7 +1,7 @@
 (function () {
-  const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY';
-  const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID';
-  const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
+  const EMAILJS_PUBLIC_KEY = 'tGxnWGzlBZ_6C7Dio';
+  const EMAILJS_SERVICE_ID = 'service_8pfqso6';
+  const EMAILJS_TEMPLATE_ID = 'template_8q2j6ss';
 
   emailjs.init({
     publicKey: EMAILJS_PUBLIC_KEY
