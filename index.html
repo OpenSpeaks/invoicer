@@ -17,6 +17,7 @@
       --line: #d9d9d9;
       --accent: #458500;
       --accent-dark: #2f5f00;
+      --accent-light: #eaf4d8;
       --radius: 12px;
     }
 
@@ -34,16 +35,23 @@
     .wrap {
       max-width: 760px;
       margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
     }
 
-.hp-field {
-  position: absolute;
-  left: -9999px;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-}
-    
+    /* ── You're welcome! ── */
+    .hp-field {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      pointer-events: none;
+      tabindex: -1;
+    }
+
+    /* ── Card ── */
     .card {
       background: var(--card);
       border-radius: var(--radius);
@@ -51,6 +59,7 @@
       overflow: hidden;
     }
 
+    /* ── Header ── */
     .header {
       border-top: 6px solid var(--accent);
       padding: 18px 20px;
@@ -73,6 +82,7 @@
       font-weight: 700;
     }
 
+    /* ── Content ── */
     .content {
       padding: 20px;
     }
@@ -82,72 +92,63 @@
       font-size: 24px;
     }
 
+    h2 {
+      margin: 0 0 14px 0;
+      font-size: 18px;
+    }
+
     p.note {
       margin-top: 0;
       color: var(--muted);
     }
 
+    /* ── Form layout ── */
     form {
       display: grid;
       gap: 16px;
     }
 
+    /* 2-column grid (date + seq, name spans full) */
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 16px;
     }
 
+    /* 2-column grid for phone + email */
     .double-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  align-items: start;
-}
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
 
-.amount-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px;
-  align-items: start;
-}
-
-.amount-grid label {
-  min-height: 3.8em;
-}
-
-@media (max-width: 800px) {
-  .double-grid,
-  .amount-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .amount-grid label {
-    min-height: auto;
-  }
-}
-
-
+    /* 3-column grid for amount + allowance + total */
     .amount-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px;
-  align-items: start;
-}
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
 
-.amount-grid label {
-  min-height: 3.6em;
-}
+    /* Make labels same height so inputs line up on desktop */
+    .amount-grid label {
+      display: flex;
+      flex-direction: column;
+    }
 
-@media (max-width: 800px) {
-  .amount-grid {
-    grid-template-columns: 1fr;
-  }
+    .amount-grid label span {
+      flex: 1;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
 
-  .amount-grid label {
-    min-height: auto;
-  }
-}
+    @media (max-width: 800px) {
+      .double-grid,
+      .amount-grid {
+        grid-template-columns: 1fr;
+      }
+    }
 
     @media (max-width: 640px) {
       .grid {
@@ -155,16 +156,15 @@
       }
     }
 
+    /* ── Inputs ── */
     label {
       display: block;
       font-weight: 600;
       margin-bottom: 6px;
     }
-<div class="hp-field" aria-hidden="true">
-  <label for="website">Leave this field empty</label>
-  <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
-</div>
-    input {
+
+    input,
+    textarea {
       width: 100%;
       padding: 12px 14px;
       border: 1px solid var(--line);
@@ -172,13 +172,22 @@
       font: inherit;
       background: #fff;
       color: var(--text);
+      resize: vertical;
     }
 
-    input:focus {
+    input:focus,
+    textarea:focus {
       outline: 2px solid #b7d58f;
       border-color: var(--accent);
     }
 
+    input[readonly] {
+      background: #f9f9f9;
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    /* ── Buttons ── */
     .actions {
       display: flex;
       gap: 12px;
@@ -196,12 +205,26 @@
       background: var(--accent);
       color: #fff;
       cursor: pointer;
+      transition: background 0.15s;
     }
 
     button:hover {
       background: var(--accent-dark);
     }
 
+    button.secondary {
+      background: #e8e8e8;
+      color: var(--text);
+      font-weight: 600;
+      font-size: 13px;
+      padding: 8px 12px;
+    }
+
+    button.secondary:hover {
+      background: #d5d5d5;
+    }
+
+    /* ── Status ── */
     .status {
       color: var(--muted);
       min-height: 1.5em;
@@ -211,15 +234,92 @@
       color: var(--muted);
       font-size: 14px;
     }
+
+    /* ── Admin section ── */
+    .admin-toggle {
+      text-align: right;
+    }
+
+    .admin-toggle button {
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .admin-toggle button:hover {
+      background: #eee;
+    }
+
+    #admin-section {
+      display: none;
+    }
+
+    #admin-section.visible {
+      display: block;
+    }
+
+    .admin-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      overflow: hidden;
+      border-top: 6px solid #888;
+    }
+
+    .admin-card .content {
+      padding: 20px;
+    }
+
+    .link-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .link-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: var(--accent-light);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .link-row .link-name {
+      font-weight: 700;
+      min-width: 120px;
+    }
+
+    .link-row .link-url {
+      flex: 1;
+      font-size: 13px;
+      color: var(--muted);
+      word-break: break-all;
+    }
+
+    .copied-msg {
+      font-size: 12px;
+      color: var(--accent-dark);
+      font-weight: 700;
+      min-width: 50px;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
+
+    <!-- ── Reimbursement Form Card ── -->
     <div class="card">
       <div class="header">
-        <a href="[Website Link]" target="_blank" rel="noopener noreferrer">
+        <a href="https://openspeaks.org" target="_blank" rel="noopener noreferrer">
           <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/OpenSpeaks_logo.svg/1280px-OpenSpeaks_logo.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail"
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/OpenSpeaks_logo.svg/1280px-OpenSpeaks_logo.svg.png"
             alt="OpenSpeaks logo"
           />
         </a>
@@ -230,15 +330,22 @@
         <h1>Reimbursement Form</h1>
         <p class="note">Fill the form, download the PDF copy, and send the details by email.</p>
 
-        <form id="reimbursement-form">
+        <form id="reimbursement-form" novalidate>
+
+          <!-- Honeypot (hidden from real users, traps bots) -->
+          <div class="hp-field" aria-hidden="true">
+            <label for="website">Leave this field empty</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <!-- Row 1: Date + Sequence number -->
           <div class="grid">
             <div>
               <label for="date">Date</label>
               <input type="date" id="date" name="date" required />
             </div>
-
             <div>
-              <label for="form_no">Reimbursement number</label>
+              <label for="sequence_no">Reimbursement number</label>
               <input
                 type="number"
                 id="sequence_no"
@@ -252,53 +359,90 @@
             </div>
           </div>
 
-          <div class="grid">
-            <div>
-              <label for="name">Your name</label>
-              <input type="text" id="name" name="name" required />
-            </div>
+          <!-- Row 2: Name (full width) -->
+          <div>
+            <label for="name">Your name</label>
+            <input type="text" id="name" name="name" required placeholder="First Last" />
+          </div>
 
+          <!-- Row 3: Phone + Email -->
           <div class="double-grid">
-  <div>
-    <label for="phone">Phone</label>
-    <input type="tel" id="phone" name="phone" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10 digit phone number" />
-  </div>
+            <div>
+              <label for="phone">Phone</label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                inputmode="numeric"
+                pattern="[0-9]{10}"
+                maxlength="10"
+                placeholder="10-digit phone number"
+              />
+            </div>
+            <div>
+              <label for="email">Email (optional)</label>
+              <input type="email" id="email" name="email" placeholder="name@domain.org" />
+            </div>
+          </div>
 
-  <div>
-    <label for="email">Email (optional)</label>
-    <input type="email" id="email" name="email" placeholder="name@domain.org" />
-  </div>
-</div>
+          <!-- Row 4: Amount + Allowance + Total -->
+          <div class="amount-grid">
+            <label for="amount">
+              <span>OpenSpeaks language documentation (INR)</span>
+              <input type="number" id="amount" name="amount" min="0" step="0.01" required placeholder="0.00" />
+            </label>
+            <label for="allowance">
+              <span>Travel/accommodation allowance (INR)</span>
+              <input type="number" id="allowance" name="allowance" min="0" step="0.01" required placeholder="0.00" />
+            </label>
+            <label for="total">
+              <span>Total (INR)</span>
+              <input type="number" id="total" name="total" min="0" step="0.01" readonly placeholder="Auto-calculated" />
+            </label>
+          </div>
 
-  <div class="amount-grid">
-  <div>
-    <label for="amount">OpenSpeaks language documentation (INR)</label>
-    <input type="number" id="amount" name="amount" min="0" step="0.01" required />
-  </div>
-
-  <div>
-    <label for="allowance">Travel/accommodation allowance (INR)</label>
-    <input type="number" id="allowance" name="allowance" min="0" step="0.01" required />
-  </div>
-
-  <div>
-    <label for="total">Total (INR)</label>
-    <input type="number" id="total" name="total" min="0" step="0.01" readonly />
-  </div>
-</div>
-
+          <!-- Submit -->
           <div class="actions">
-            <button type="submit">Generate PDF and Send</button>
+            <button type="submit">Generate PDF &amp; Send</button>
             <span id="status" class="status"></span>
           </div>
 
-          <div class="small">
+          <p class="small">
             Provide at least a phone number or an email address. If an email is entered, a copy can also be sent there.
-          </div>
+          </p>
         </form>
       </div>
     </div>
-  </div>
+
+    <!-- ── Admin toggle ── -->
+    <div class="admin-toggle">
+      <button type="button" id="toggle-admin">⚙ Admin: Generate Links</button>
+    </div>
+
+    <!-- ── Admin Section ── -->
+    <div id="admin-section">
+      <div class="admin-card">
+        <div class="content">
+          <h2>Admin — Generate Unique Links</h2>
+          <p class="note">
+            Paste one name per line. Each person gets a unique pre-filled link with a one-time token.
+          </p>
+
+          <div>
+            <label for="admin-names">Names (one per line)</label>
+            <textarea id="admin-names" rows="6" placeholder="Ravi Kumar&#10;Priya Sharma&#10;Aarav Nair"></textarea>
+          </div>
+
+          <div class="actions" style="margin-top:12px;">
+            <button type="button" id="generate-links-btn">Generate unique links</button>
+          </div>
+
+          <div id="link-output" class="link-list"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.wrap -->
 
   <script src="main.js"></script>
 </body>
