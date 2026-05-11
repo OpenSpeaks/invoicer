@@ -2,39 +2,74 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Agreement Form</title>
-  <!-- jsPDF from CDN -->
+  <title>Reimbursement Form</title>
+
+  <!-- jsPDF via CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <!-- EmailJS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 <body>
-  <form id="agreement-form">
+  <h1>Reimbursement Form</h1>
+
+  <form id="reimbursement-form">
     <label>
-      Name
+      Date
+      <!-- Clickable date picker; normalized to yyyy-mm-dd -->
+      <input type="date" name="date" required />
+    </label>
+    <br/>
+
+    <label>
+      Your name
       <input name="name" required />
-    </label><br/>
+    </label>
+    <br/>
 
     <label>
       Phone (required if no email)
       <input name="phone" />
-    </label><br/>
+    </label>
+    <br/>
 
     <label>
       Email (optional)
       <input type="email" name="email" />
-    </label><br/>
+    </label>
+    <br/>
 
     <label>
-      Agreement details
-      <textarea name="details" required></textarea>
-    </label><br/>
+      Reimbursement form no.
+      <input name="form_no" required />
+    </label>
+    <br/>
+
+    <label>
+      Amount (INR) – OpenSpeaks language documentation
+      <input type="number" name="amount" min="0" step="0.01" required />
+    </label>
+    <br/>
+
+    <label>
+      Travel/accommodation allowance (INR)
+      <input type="number" name="allowance" min="0" step="0.01" required />
+    </label>
+    <br/>
+
+    <!-- total can be auto-calculated in JS; keep it read-only in UI -->
+    <label>
+      Total (INR)
+      <input type="number" name="total" min="0" step="0.01" readonly />
+    </label>
+    <br/>
 
     <button type="submit">Submit</button>
   </form>
 
   <p id="status"></p>
 
+  <!-- Your custom JS -->
   <script src="main.js"></script>
 </body>
 </html>
