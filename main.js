@@ -1,8 +1,7 @@
 (function () {
-  const EMAILJS_PUBLIC_KEY = 'tGxnWGzlBZ_6C7Dio'; // YOUR_PUBLIC_KEY
-  const EMAILJS_SERVICE_ID = 'service_8pfqso6'; // YOUR_SERVICE_ID
-  const EMAILJS_ARCHIVE_TEMPLATE_ID = ''; // YOUR_ARCHIVE_TEMPLATE_ID
-  const EMAILJS_USER_TEMPLATE_ID = 'template_8q2j6ss'; // YOUR_USER_TEMPLATE_ID
+  const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY';
+  const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID';
+  const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
 
   emailjs.init({
     publicKey: EMAILJS_PUBLIC_KEY
@@ -21,6 +20,17 @@
   function toMoney(value) {
     const num = Number(value || 0);
     return num.toFixed(2);
+  }
+
+  function formatDateLong(isoDate) {
+    if (!isoDate) return '';
+    const [year, month, day] = isoDate.split('-').map(Number);
+    const dt = new Date(year, month - 1, day);
+    return new Intl.DateTimeFormat('en-GB', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    }).format(dt);
   }
 
   function updateTotal() {
@@ -67,12 +77,12 @@
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
 
-    doc.text(`Date: ${templateData.date}`, left, y);
+    doc.text(`Date: ${templateData.date_long}`, left, y);
     y += 8;
 
     y = wrapText(
       doc,
-      `From: ${templateData.name} (contact: Phone ${templateData.phone || '-'}, Email: ${templateData.email || '-'})`,
+      `From: ${templateData.name} (contact: Phone ${templateData.phone}, Email: ${templateData.email})`,
       left,
       y,
       170,
@@ -89,7 +99,7 @@
 
     doc.setFont('helvetica', 'bold');
     doc.text('Description', left, y);
-    doc.text('Amount in Indian Rupees', 130, y, { align: 'left' });
+    doc.text('Amount in Indian Rupees', 190, y, { align: 'right' });
     y += 4;
 
     doc.line(left, y, 190, y);
@@ -131,11 +141,13 @@
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
+    doc.text(`Date: ${templateData.date_long}`, left, 32);
+
     wrapText(
       doc,
       `SHA-256 hash of this PDF: ${pdfHash}`,
       left,
-      32,
+      44,
       170,
       6
     );
@@ -155,22 +167,11 @@
     URL.revokeObjectURL(url);
   }
 
-  async function sendArchiveEmail(params) {
+  async function sendEmail(params) {
     return emailjs.send(
       EMAILJS_SERVICE_ID,
-      EMAILJS_ARCHIVE_TEMPLATE_ID,
+      EMAILJS_TEMPLATE_ID,
       params
-    );
-  }
-
-  async function sendUserEmail(params) {
-    return emailjs.send(
-      EMAILJS_SERVICE_ID,
-      EMAILJS_USER_TEMPLATE_ID,
-      {
-        ...params,
-        to_email: params.email
-      }
     );
   }
 
@@ -182,22 +183,28 @@
 
     const formData = new FormData(form);
 
+    const rawEmail = (formData.get('email') || '').trim();
+    const rawPhone = (formData.get('phone') || '').trim();
+    const rawDate = formData.get('date') || '';
+
+    if (!rawPhone && !rawEmail) {
+      setStatus('Please provide at least a phone number or an email address.');
+      return;
+    }
+
     const templateData = {
-      date: formData.get('date') || '',
+      date: rawDate,
+      date_long: formatDateLong(rawDate),
       name: (formData.get('name') || '').trim(),
-      phone: (formData.get('phone') || '').trim(),
-      email: (formData.get('email') || '').trim(),
+      phone: rawPhone || '-',
+      email: rawEmail || '-',
+      email_or_phone: rawEmail || rawPhone || '-',
       billed_name: (formData.get('billed_name') || '').trim(),
       form_no: (formData.get('form_no') || '').trim(),
       amount: toMoney(formData.get('amount')),
       allowance: toMoney(formData.get('allowance')),
       total: toMoney(formData.get('total'))
     };
-
-    if (!templateData.phone && !templateData.email) {
-      setStatus('Please provide at least a phone number or an email address.');
-      return;
-    }
 
     if (
       !templateData.date ||
@@ -216,20 +223,18 @@
 
       const emailParams = {
         ...templateData,
-        pdf_hash: hash
+        pdf_hash: hash,
+        reply_to: rawEmail || ''
       };
 
-      await sendArchiveEmail(emailParams);
-
-      if (templateData.email) {
-        await sendUserEmail(emailParams);
-      }
+      const response = await sendEmail(emailParams);
+      console.log('EmailJS success:', response);
 
       setStatus('Done. PDF downloaded and email sent.');
       form.reset();
       totalInput.value = '';
     } catch (error) {
-      console.error(error);
+      console.error('EmailJS / form error:', error);
       setStatus('Something went wrong while generating or sending the form.');
     }
   });
